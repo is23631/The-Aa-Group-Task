@@ -1,0 +1,1051 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "takeawayhometask"
+		},
+		"csv_blob_dim_market_data_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'csv_blob_dim_market_data'"
+		},
+		"sqldb_stock_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'sqldb_stock'"
+		},
+		"api_marketstack_stockmarketdata_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://api.marketstack.com/v1"
+		},
+		"sqldb_stock_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "sqlserverimran.database.windows.net"
+		},
+		"sqldb_stock_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "sample_db"
+		},
+		"sqldb_stock_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "imran_admin"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/api_to_sqldb')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data1",
+						"type": "Copy",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "RestSource",
+								"additionalColumns": [
+									{
+										"name": "load_Date",
+										"value": {
+											"value": "@formatDateTime(utcNow(),'yyyy-MM-dd hh:mm:ss')",
+											"type": "Expression"
+										}
+									}
+								],
+								"httpRequestTimeout": "00:01:40",
+								"requestInterval": "00.00:00:00.010",
+								"requestMethod": "GET",
+								"paginationRules": {
+									"supportRFC5988": "true"
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": false,
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"path": "[['open']"
+										},
+										"sink": {
+											"name": "open",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"path": "[['high']"
+										},
+										"sink": {
+											"name": "high",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"path": "[['low']"
+										},
+										"sink": {
+											"name": "low",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"path": "[['close']"
+										},
+										"sink": {
+											"name": "close",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"path": "[['volume']"
+										},
+										"sink": {
+											"name": "volume",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"path": "[['adj_high']"
+										},
+										"sink": {
+											"name": "adj_high",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"path": "[['adj_low']"
+										},
+										"sink": {
+											"name": "adj_low",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"path": "[['adj_close']"
+										},
+										"sink": {
+											"name": "adj_close",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"path": "[['adj_open']"
+										},
+										"sink": {
+											"name": "adj_open",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"path": "[['adj_volume']"
+										},
+										"sink": {
+											"name": "adj_volume",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"path": "[['split_factor']"
+										},
+										"sink": {
+											"name": "split_factor",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"path": "[['dividend']"
+										},
+										"sink": {
+											"name": "dividend",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"path": "[['symbol']"
+										},
+										"sink": {
+											"name": "symbol",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['exchange']"
+										},
+										"sink": {
+											"name": "exchange",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['date']"
+										},
+										"sink": {
+											"name": "date",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"path": "$['load_Date']"
+										},
+										"sink": {
+											"name": "load_date",
+											"type": "DateTime"
+										}
+									}
+								],
+								"collectionReference": "$['data']"
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_api_marketstack_stockmarketdata",
+								"type": "DatasetReference",
+								"parameters": {
+									"relative_url": {
+										"value": "@concat(pipeline().parameters.endpoint,\nformatDateTime(addDays(utcNow(),-1),'yyyy-MM-dd'),\n'?',\npipeline().parameters.access_key,\n'&',pipeline().parameters.symbol_list)",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "sqltable",
+								"type": "DatasetReference",
+								"parameters": {
+									"Tablename": {
+										"value": "@pipeline().parameters.ApiTargetTableName",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "CopyDataFromCsvFile",
+						"type": "Copy",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": false,
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "symbol",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "symbol",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Name",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "name",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Stock Exchange",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "stock_exchange",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Country",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "country",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Country_Code",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "country_code",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "City",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "city",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_dim_market_data",
+								"type": "DatasetReference",
+								"parameters": {
+									"Containername": {
+										"value": "@pipeline().parameters.containername",
+										"type": "Expression"
+									},
+									"Filename": {
+										"value": "@pipeline().parameters.FileName",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "sqltable",
+								"type": "DatasetReference",
+								"parameters": {
+									"Tablename": {
+										"value": "@pipeline().parameters.CsvTargetTableName",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "dataflow1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Copy data1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "CopyDataFromCsvFile",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "dataflow1",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"stockdata": {},
+									"dimstockexchange": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"endpoint": {
+						"type": "string",
+						"defaultValue": "eod/"
+					},
+					"access_key": {
+						"type": "string",
+						"defaultValue": "access_key=899c107ff5db0ebfae4b172399d41715"
+					},
+					"symbol_list": {
+						"type": "string",
+						"defaultValue": "symbols=MSFT,AAPL,AMZN,GOOG,GOOGL,BABA,FB,BRK.B,BRK.A,VOD,V,JPM,JNJ,WMT,MA,PG,TSM,CHT,RHHBF,RHHVF"
+					},
+					"containername": {
+						"type": "string",
+						"defaultValue": "input"
+					},
+					"FileName": {
+						"type": "string",
+						"defaultValue": "market_data.csv"
+					},
+					"CsvTargetTableName": {
+						"type": "string",
+						"defaultValue": "dim_stock_exchange"
+					},
+					"ApiTargetTableName": {
+						"type": "string",
+						"defaultValue": "stock_data"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-11-02T09:59:24Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_api_marketstack_stockmarketdata')]",
+				"[concat(variables('factoryId'), '/datasets/sqltable')]",
+				"[concat(variables('factoryId'), '/datasets/ds_dim_market_data')]",
+				"[concat(variables('factoryId'), '/dataflows/dataflow1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data1",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": false,
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_dim_market_data",
+								"type": "DatasetReference",
+								"parameters": {
+									"Containername": {
+										"value": "@pipeline().parameters.filepath",
+										"type": "Expression"
+									},
+									"Filename": {
+										"value": "@pipeline().parameters.filename",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "sqltable",
+								"type": "DatasetReference",
+								"parameters": {
+									"Tablename": {
+										"value": "@pipeline().parameters.tablename",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"filepath": {
+						"type": "string",
+						"defaultValue": "input"
+					},
+					"filename": {
+						"type": "string",
+						"defaultValue": "Synthetic_Stock_Data_Last_30_Days.csv"
+					},
+					"tablename": {
+						"type": "string",
+						"defaultValue": "stg_stock_data"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-11-01T23:07:09Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_dim_market_data')]",
+				"[concat(variables('factoryId'), '/datasets/sqltable')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlTable1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sqldb_stock",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "Final_stock_data"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/sqldb_stock')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dim_stock_companies')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "csv_blob_dim_market_data",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "market_data.csv",
+						"container": "input"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "symbol",
+						"type": "String"
+					},
+					{
+						"name": "Name",
+						"type": "String"
+					},
+					{
+						"name": "Stock Exchange",
+						"type": "String"
+					},
+					{
+						"name": "Country",
+						"type": "String"
+					},
+					{
+						"name": "Country_Code",
+						"type": "String"
+					},
+					{
+						"name": "City",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/csv_blob_dim_market_data')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_api_marketstack_stockmarketdata')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "api_marketstack_stockmarketdata",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"relative_url": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {
+					"relativeUrl": {
+						"value": "@dataset().relative_url",
+						"type": "Expression"
+					}
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/api_marketstack_stockmarketdata')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_dim_market_data')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "csv_blob_dim_market_data",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Containername": {
+						"type": "string"
+					},
+					"Filename": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@dataset().Filename",
+							"type": "Expression"
+						},
+						"container": {
+							"value": "@dataset().Containername",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/csv_blob_dim_market_data')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sqldb_transform')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sqldb_stock",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "symbol",
+						"type": "varchar"
+					},
+					{
+						"name": "exchange",
+						"type": "varchar"
+					},
+					{
+						"name": "date",
+						"type": "date"
+					},
+					{
+						"name": "open",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "high",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "low",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "close",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "volume",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "adj_high",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "adj_low",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "adj_close",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "adj_open",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "adj_volume",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "split_factor",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "dividend",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "load_date",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "stock_data"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/sqldb_stock')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sqltable')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sqldb_stock",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Tablename": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": {
+						"value": "@dataset().Tablename",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/sqldb_stock')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/api_marketstack_stockmarketdata')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('api_marketstack_stockmarketdata_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": false,
+					"authenticationType": "Anonymous"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/csv_blob_dim_market_data')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('csv_blob_dim_market_data_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sqldb_stock')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('sqldb_stock_properties_typeProperties_server')]",
+					"database": "[parameters('sqldb_stock_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": false,
+					"authenticationType": "SQL",
+					"userName": "[parameters('sqldb_stock_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('sqldb_stock_password')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow1')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "sqldb_transform",
+								"type": "DatasetReference"
+							},
+							"name": "stockdata"
+						},
+						{
+							"dataset": {
+								"referenceName": "dim_stock_companies",
+								"type": "DatasetReference"
+							},
+							"name": "dimstockexchange",
+							"description": "Import data from dimstockexchange"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "AzureSqlTable1",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "join1"
+						},
+						{
+							"name": "newcolumndayschange"
+						},
+						{
+							"name": "select1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          symbol as string,",
+						"          exchange as string,",
+						"          date as date,",
+						"          open as decimal(10,2),",
+						"          high as decimal(10,2),",
+						"          low as decimal(10,2),",
+						"          close as decimal(10,2),",
+						"          volume as long,",
+						"          adj_high as decimal(10,2),",
+						"          adj_low as decimal(10,2),",
+						"          adj_close as decimal(10,2),",
+						"          adj_open as decimal(10,2),",
+						"          adj_volume as long,",
+						"          split_factor as decimal(10,2),",
+						"          dividend as integer,",
+						"          load_date as timestamp",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: 'Select * from dbo.stock_data',",
+						"     format: 'query') ~> stockdata",
+						"source(output(",
+						"          symbol as string,",
+						"          Name as string,",
+						"          {Stock Exchange} as string,",
+						"          Country as string,",
+						"          Country_Code as string,",
+						"          City as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     partitionBy('hash', 1)) ~> dimstockexchange",
+						"newcolumndayschange, dimstockexchange join(stockdata@symbol == dimstockexchange@symbol,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join1",
+						"stockdata derive(PercentageChange = ((close-open)/open)*100) ~> newcolumndayschange",
+						"join1 select(mapColumn(",
+						"          symbol = stockdata@symbol,",
+						"          exchange,",
+						"          date,",
+						"          open,",
+						"          high,",
+						"          low,",
+						"          close,",
+						"          volume,",
+						"          load_date,",
+						"          PercentageChange,",
+						"          Name,",
+						"          Country,",
+						"          City",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"select1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/sqldb_transform')]",
+				"[concat(variables('factoryId'), '/datasets/dim_stock_companies')]",
+				"[concat(variables('factoryId'), '/datasets/AzureSqlTable1')]"
+			]
+		}
+	]
+}

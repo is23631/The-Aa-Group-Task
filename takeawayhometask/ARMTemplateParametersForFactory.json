@@ -1,0 +1,27 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "takeawayhometask"
+		},
+		"csv_blob_dim_market_data_connectionString": {
+			"value": ""
+		},
+		"sqldb_stock_password": {
+			"value": ""
+		},
+		"api_marketstack_stockmarketdata_properties_typeProperties_url": {
+			"value": "https://api.marketstack.com/v1"
+		},
+		"sqldb_stock_properties_typeProperties_server": {
+			"value": "sqlserverimran.database.windows.net"
+		},
+		"sqldb_stock_properties_typeProperties_database": {
+			"value": "sample_db"
+		},
+		"sqldb_stock_properties_typeProperties_userName": {
+			"value": "imran_admin"
+		}
+	}
+}
