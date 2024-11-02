@@ -1,0 +1,105 @@
+{
+	"name": "sqldb_transform",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "sqldb_stock",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "symbol",
+				"type": "varchar"
+			},
+			{
+				"name": "exchange",
+				"type": "varchar"
+			},
+			{
+				"name": "date",
+				"type": "date"
+			},
+			{
+				"name": "open",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			},
+			{
+				"name": "high",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			},
+			{
+				"name": "low",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			},
+			{
+				"name": "close",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			},
+			{
+				"name": "volume",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "adj_high",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			},
+			{
+				"name": "adj_low",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			},
+			{
+				"name": "adj_close",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			},
+			{
+				"name": "adj_open",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			},
+			{
+				"name": "adj_volume",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "split_factor",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			},
+			{
+				"name": "dividend",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "load_date",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "stock_data"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

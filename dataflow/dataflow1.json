@@ -1,0 +1,115 @@
+{
+	"name": "dataflow1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "sqldb_transform",
+						"type": "DatasetReference"
+					},
+					"name": "stockdata"
+				},
+				{
+					"dataset": {
+						"referenceName": "dim_stock_companies",
+						"type": "DatasetReference"
+					},
+					"name": "dimstockexchange",
+					"description": "Import data from dimstockexchange"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "AzureSqlTable1",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "join1"
+				},
+				{
+					"name": "newcolumndayschange"
+				},
+				{
+					"name": "select1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          symbol as string,",
+				"          exchange as string,",
+				"          date as date,",
+				"          open as decimal(10,2),",
+				"          high as decimal(10,2),",
+				"          low as decimal(10,2),",
+				"          close as decimal(10,2),",
+				"          volume as long,",
+				"          adj_high as decimal(10,2),",
+				"          adj_low as decimal(10,2),",
+				"          adj_close as decimal(10,2),",
+				"          adj_open as decimal(10,2),",
+				"          adj_volume as long,",
+				"          split_factor as decimal(10,2),",
+				"          dividend as integer,",
+				"          load_date as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'Select * from dbo.stock_data',",
+				"     format: 'query') ~> stockdata",
+				"source(output(",
+				"          symbol as string,",
+				"          Name as string,",
+				"          {Stock Exchange} as string,",
+				"          Country as string,",
+				"          Country_Code as string,",
+				"          City as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     partitionBy('hash', 1)) ~> dimstockexchange",
+				"newcolumndayschange, dimstockexchange join(stockdata@symbol == dimstockexchange@symbol,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"stockdata derive(PercentageChange = ((close-open)/open)*100) ~> newcolumndayschange",
+				"join1 select(mapColumn(",
+				"          symbol = stockdata@symbol,",
+				"          exchange,",
+				"          date,",
+				"          open,",
+				"          high,",
+				"          low,",
+				"          close,",
+				"          volume,",
+				"          load_date,",
+				"          PercentageChange,",
+				"          Name,",
+				"          Country,",
+				"          City",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+			]
+		}
+	}
+}

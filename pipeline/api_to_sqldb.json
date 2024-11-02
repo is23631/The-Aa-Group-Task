@@ -1,0 +1,438 @@
+{
+	"name": "api_to_sqldb",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy data1",
+				"type": "Copy",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "RestSource",
+						"additionalColumns": [
+							{
+								"name": "load_Date",
+								"value": {
+									"value": "@formatDateTime(utcNow(),'yyyy-MM-dd hh:mm:ss')",
+									"type": "Expression"
+								}
+							}
+						],
+						"httpRequestTimeout": "00:01:40",
+						"requestInterval": "00.00:00:00.010",
+						"requestMethod": "GET",
+						"paginationRules": {
+							"supportRFC5988": "true"
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false,
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "['open']"
+								},
+								"sink": {
+									"name": "open",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "['high']"
+								},
+								"sink": {
+									"name": "high",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "['low']"
+								},
+								"sink": {
+									"name": "low",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "['close']"
+								},
+								"sink": {
+									"name": "close",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "['volume']"
+								},
+								"sink": {
+									"name": "volume",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "['adj_high']"
+								},
+								"sink": {
+									"name": "adj_high",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "['adj_low']"
+								},
+								"sink": {
+									"name": "adj_low",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "['adj_close']"
+								},
+								"sink": {
+									"name": "adj_close",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "['adj_open']"
+								},
+								"sink": {
+									"name": "adj_open",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "['adj_volume']"
+								},
+								"sink": {
+									"name": "adj_volume",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "['split_factor']"
+								},
+								"sink": {
+									"name": "split_factor",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "['dividend']"
+								},
+								"sink": {
+									"name": "dividend",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "['symbol']"
+								},
+								"sink": {
+									"name": "symbol",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['exchange']"
+								},
+								"sink": {
+									"name": "exchange",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['date']"
+								},
+								"sink": {
+									"name": "date",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"path": "$['load_Date']"
+								},
+								"sink": {
+									"name": "load_date",
+									"type": "DateTime"
+								}
+							}
+						],
+						"collectionReference": "$['data']"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_api_marketstack_stockmarketdata",
+						"type": "DatasetReference",
+						"parameters": {
+							"relative_url": {
+								"value": "@concat(pipeline().parameters.endpoint,\nformatDateTime(addDays(utcNow(),-1),'yyyy-MM-dd'),\n'?',\npipeline().parameters.access_key,\n'&',pipeline().parameters.symbol_list)",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "sqltable",
+						"type": "DatasetReference",
+						"parameters": {
+							"Tablename": {
+								"value": "@pipeline().parameters.ApiTargetTableName",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "CopyDataFromCsvFile",
+				"type": "Copy",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false,
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "symbol",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "symbol",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "Name",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "name",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "Stock Exchange",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "stock_exchange",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "Country",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "country",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "Country_Code",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "country_code",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "City",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "city",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_dim_market_data",
+						"type": "DatasetReference",
+						"parameters": {
+							"Containername": {
+								"value": "@pipeline().parameters.containername",
+								"type": "Expression"
+							},
+							"Filename": {
+								"value": "@pipeline().parameters.FileName",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "sqltable",
+						"type": "DatasetReference",
+						"parameters": {
+							"Tablename": {
+								"value": "@pipeline().parameters.CsvTargetTableName",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "dataflow1",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "Copy data1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "CopyDataFromCsvFile",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "dataflow1",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			}
+		],
+		"parameters": {
+			"endpoint": {
+				"type": "string",
+				"defaultValue": "eod/"
+			},
+			"access_key": {
+				"type": "string",
+				"defaultValue": "access_key=899c107ff5db0ebfae4b172399d41715"
+			},
+			"symbol_list": {
+				"type": "string",
+				"defaultValue": "symbols=MSFT,AAPL,AMZN,GOOG,GOOGL,BABA,FB,BRK.B,BRK.A,VOD,V,JPM,JNJ,WMT,MA,PG,TSM,CHT,RHHBF,RHHVF"
+			},
+			"containername": {
+				"type": "string",
+				"defaultValue": "input"
+			},
+			"FileName": {
+				"type": "string",
+				"defaultValue": "market_data.csv"
+			},
+			"CsvTargetTableName": {
+				"type": "string",
+				"defaultValue": "dim_stock_exchange"
+			},
+			"ApiTargetTableName": {
+				"type": "string",
+				"defaultValue": "stock_data"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-11-02T09:59:24Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

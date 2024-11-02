@@ -1,0 +1,9 @@
+{
+	"name": "takeawayhometask",
+	"location": "uksouth",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "76f6dd6d-7882-4179-a3e9-465b5cb0316f",
+		"tenantId": "df494d61-2151-473b-94a9-e7ff611bbd3f"
+	}
+}
