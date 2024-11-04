@@ -27,6 +27,14 @@
 						"type": "DatasetReference"
 					},
 					"name": "sink1"
+				},
+				{
+					"dataset": {
+						"referenceName": "DelimitedText1",
+						"type": "DatasetReference"
+					},
+					"name": "sink2",
+					"description": "Export data to LogCSV Folder"
 				}
 			],
 			"transformations": [
@@ -38,6 +46,9 @@
 				},
 				{
 					"name": "select1"
+				},
+				{
+					"name": "split1"
 				}
 			],
 			"scriptLines": [
@@ -76,14 +87,14 @@
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false,",
 				"     partitionBy('hash', 1)) ~> dimstockexchange",
-				"newcolumndayschange, dimstockexchange join(stockdata@symbol == dimstockexchange@symbol,",
+				"newcolumndayschange, dimstockexchange join(split1@validoutput@symbol == dimstockexchange@symbol,",
 				"     joinType:'inner',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
 				"     broadcast: 'auto')~> join1",
-				"stockdata derive(PercentageChange = ((close-open)/open)*100) ~> newcolumndayschange",
+				"split1@validoutput derive(PercentageChange = ((close-open)/open)*100) ~> newcolumndayschange",
 				"join1 select(mapColumn(",
-				"          symbol = stockdata@symbol,",
+				"          symbol = split1@validoutput@symbol,",
 				"          exchange,",
 				"          date,",
 				"          open,",
@@ -99,6 +110,9 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select1",
+				"stockdata split(notEquals(symbol,''),",
+				"     equals(symbol, ''),",
+				"     disjoint: false) ~> split1@(validoutput, invalidoutput)",
 				"select1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     deletable:false,",
@@ -108,7 +122,19 @@
 				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1",
+				"split1@invalidoutput sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          Name as string,",
+				"          Category as string,",
+				"          Status as string,",
+				"          Error as string",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 1,",
+				"     partitionBy('hash', 1)) ~> sink2"
 			]
 		}
 	}
