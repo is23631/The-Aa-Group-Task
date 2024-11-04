@@ -5,8 +5,6 @@
 			{
 				"name": "Copy data1",
 				"type": "Copy",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
@@ -221,6 +219,8 @@
 			{
 				"name": "dataflow1",
 				"type": "ExecuteDataFlow",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "Copy data1",
@@ -261,7 +261,7 @@
 			},
 			"symbol_list": {
 				"type": "string",
-				"defaultValue": "symbols=MSFT,AAPL,AMZN,GOOG,GOOGL,BABA,FB,BRK.B,BRK.A,VOD,V,JPM,JNJ,WMT,MA,PG,TSM,CHT,RHHBF,RHHVF"
+				"defaultValue": "symbols=MSFT,AAPL"
 			},
 			"containername": {
 				"type": "string",
