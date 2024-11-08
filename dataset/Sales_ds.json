@@ -2,7 +2,7 @@
 	"name": "Sales_ds",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "csv_blob_dim_market_data",
+			"referenceName": "blob_ls",
 			"type": "LinkedServiceReference"
 		},
 		"parameters": {

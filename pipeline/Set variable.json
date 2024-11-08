@@ -14,7 +14,7 @@
 				"typeProperties": {
 					"variableName": "FileName",
 					"value": {
-						"value": "@concat('Sales_',pipeline().parameters.Month,'_',pipeline().parameters.Year)",
+						"value": "@concat('Sales_',pipeline().parameters.Month,'_',pipeline().parameters.Year,'.csv')",
 						"type": "Expression"
 					}
 				}
