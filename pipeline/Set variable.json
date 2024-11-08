@@ -204,7 +204,7 @@
 			},
 			"Month": {
 				"type": "string",
-				"defaultValue": "Dec"
+				"defaultValue": "DEC"
 			}
 		},
 		"variables": {
